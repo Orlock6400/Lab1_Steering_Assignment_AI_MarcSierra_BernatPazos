@@ -2,15 +2,18 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;
+    public float moveSpeed = 5f;
+    public bool active;
 
     void Update()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
+        if(active)
+        {   float horizontal = Input.GetAxisRaw("Horizontal");
+            float vertical = Input.GetAxisRaw("Vertical");
 
-        Vector3 movement = new Vector3(horizontal, 0f, vertical);
+            Vector3 movement = new Vector3(horizontal, 0f, vertical);
 
-        transform.position += movement.normalized * moveSpeed * Time.deltaTime;
+            transform.position += movement.normalized * moveSpeed * Time.deltaTime;
+        }
     }
 }
