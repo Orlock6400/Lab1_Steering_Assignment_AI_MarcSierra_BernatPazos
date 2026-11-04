@@ -12,10 +12,12 @@ public class FlockAgent : MonoBehaviour
 
     private NavMeshAgent navAgent;
     private float updateTimer;
+    private NavMeshPath path;
 
     private void Awake()
     {
         navAgent = GetComponent<NavMeshAgent>();
+        path = new NavMeshPath();
     }
 
     private void Start()
@@ -35,7 +37,7 @@ public class FlockAgent : MonoBehaviour
             navAgent.avoidancePriority = Random.Range(30, 90);
             }
 
-            updateTimer = Random.Range(0f, manager.updateInterval);
+            //updateTimer = Random.Range(0f, manager.updateInterval);
         }
     }
 
@@ -46,13 +48,8 @@ public class FlockAgent : MonoBehaviour
             return;
         }
 
-        updateTimer += Time.deltaTime;
-
-        if (updateTimer >= manager.updateInterval)
-        {
-            updateTimer = 0f;
-            UpdateSteering();
-        }
+        //updateTimer += Time.deltaTime;
+        UpdateSteering();
     }
 
     private void UpdateSteering()
@@ -94,8 +91,6 @@ public class FlockAgent : MonoBehaviour
 
             if (distance < manager.separationDistance)
             {
-                //separation -= offset / (distance * distance);
-
                 float strength = 1f - distance / manager.separationDistance;
                 separation -= offset.normalized * strength;
             }
@@ -130,14 +125,8 @@ public class FlockAgent : MonoBehaviour
 
             if (leader != null)
             {
-                Vector3 leaderOffset = leader.transform.position - transform.position;
 
-                leaderOffset.y = 0f;
-
-                if (leaderOffset.sqrMagnitude > 0.001f)
-                {
-                    leaderFollowing = leaderOffset.normalized;
-                }
+                leaderFollowing = GetPathDirection(leader.transform.position);
             }
         }
 
@@ -154,16 +143,10 @@ public class FlockAgent : MonoBehaviour
 
         if (isLeader && manager.target != null)
         {
-            Vector3 targetDirection =
-                manager.target.position - transform.position;
 
-            targetDirection.y = 0f;
+            Vector3 targetDirection = GetPathDirection(manager.target.position);
 
-            if (targetDirection.sqrMagnitude > 0.001f)
-            {
-                desiredDirection += targetDirection.normalized
-                    * manager.leaderWeight;
-            }
+            desiredDirection += targetDirection * manager.leaderWeight;
         }
 
         if (desiredDirection.sqrMagnitude > 0.001f)
@@ -193,6 +176,37 @@ public class FlockAgent : MonoBehaviour
                 navAgent.isStopped = true;
             }
         }
+    }
+
+    private Vector3 GetPathDirection(Vector3 goal)
+    {
+        NavMeshHit goalHit;
+
+        if (!NavMesh.SamplePosition(goal, out goalHit, 3f, navAgent.areaMask))
+        {
+            return Vector3.zero;
+        }
+
+        if (!NavMesh.CalculatePath(
+            transform.position, goalHit.position, navAgent.areaMask, path))
+        {
+            return Vector3.zero;
+        }
+
+        if (path.corners.Length < 2)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 direction = path.corners[1] - transform.position;
+        direction.y = 0f;
+
+        if (direction.sqrMagnitude > 0.001f)
+        {
+            return direction.normalized;
+        }
+
+        return Vector3.zero;
     }
 
     private FlockAgent FindNearestLeader()
