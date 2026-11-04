@@ -2,18 +2,20 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
-    public float moveSpeed = 5f;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float turnSpeed = 120f;
     public bool active;
 
-    void Update()
+    private void Update()
     {
         if(active)
-        {   float horizontal = Input.GetAxisRaw("Horizontal");
-            float vertical = Input.GetAxisRaw("Vertical");
+        {
+            float turn = Input.GetAxis("Horizontal");
+            float move = Input.GetAxis("Vertical");
 
-            Vector3 movement = new Vector3(horizontal, 0f, vertical);
+            transform.Rotate(0f, turn * turnSpeed * Time.deltaTime, 0f);
 
-            transform.position += movement.normalized * moveSpeed * Time.deltaTime;
+            transform.position += transform.forward * move * moveSpeed * Time.deltaTime;
         }
     }
 }
